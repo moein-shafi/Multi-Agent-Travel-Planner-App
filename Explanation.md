@@ -192,3 +192,71 @@ If you're only interested in the final output, you can simply capture the result
 ```
 
 This simple example demonstrates the core workflow of CrewAI: defining agents with specific roles, assigning them tasks, organizing these components into a crew, and executing the workflow to achieve your desired outcome.
+
+
+## Creating Flexible Tasks with Placeholders
+
+Placeholders are a powerful feature in CrewAI that allows tasks to be more flexible and adaptable. They act as variables within task descriptions and expected outputs, enabling you to define tasks that can change based on different inputs. This means you can create a single task template that can be reused in various scenarios by simply altering the input values. For example, instead of hardcoding a city name in a task, you can use a placeholder like `{city}`. This makes your tasks dynamic and reusable, allowing agents to handle a wider range of requests without needing to redefine tasks for each specific case.
+
+Let's break down a code example to see how placeholders are used in practice. We start by defining a travel agent and a task with placeholders in the description and expected output.
+
+```python
+from crewai import Agent, Task, Crew, Process
+
+# Define a basic agent
+travel_agent = Agent(
+    role='Travel Agent',
+    goal='Help users plan their trips',
+    backstory='You are an experienced travel agent who loves helping people discover new places.'
+)
+
+# Define a task with placeholders
+planning_task = Task(
+    description='Suggest {num_attractions} popular attractions to visit in {city}.',
+    expected_output='A list of {num_attractions} popular attractions in {city} with brief descriptions.',
+    agent=travel_agent
+)
+```
+
+In this code, the `description` and `expected_output` fields of the `Task` class use placeholders `{num_attractions}` and `{city}`. These placeholders will be replaced with actual values when the task is executed, allowing the task to adapt to different input scenarios.
+
+### Setting Up Dynamic Inputs
+
+To utilize the placeholders effectively, we need to set up dynamic inputs that will be used during task execution. This involves specifying the values for the placeholders when the crew is run.
+
+
+```python
+# Set up inputs for the task
+inputs = {
+    "city": "San Diego",
+    "num_attractions": 3
+}
+```
+
+Here, we define a dictionary inputs with keys corresponding to the placeholders in the task. The values assigned to these keys will replace the placeholders during execution, allowing the task to be customized for different cities and numbers of attractions.
+
+
+### Executing the Crew with Flexible Tasks
+
+With the task and inputs defined, we can now execute the crew and observe how the placeholders are utilized during execution.
+
+
+
+```python
+# Assemble the crew
+crew = Crew(
+    agents=[travel_agent],
+    tasks=[planning_task],
+    process=Process.sequential
+)
+
+# Execute the crew with the specified inputs
+result = crew.kickoff(inputs=inputs)
+
+# Display the result
+print(result)
+```
+
+When the `kickoff()` method is called, CrewAI processes the task by replacing the placeholders with the values from the `inputs` dictionary. The travel agent then uses these values to generate a response. The output will be a list of popular attractions in San Diego, formatted according to the expected output defined in the task.
+
+
