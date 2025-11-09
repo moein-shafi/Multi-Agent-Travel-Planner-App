@@ -1129,3 +1129,134 @@ In this output, you can see:
 
 This demonstrates how our custom search tool empowers the agent with the ability to access up-to-date information from the web. The agent can now use these search results to compile a more accurate and comprehensive travel plan for Dubai, including both popular attractions and important cultural insights that travelers should be aware of.
 
+
+
+# Leveraging CrewAI's Built-in Tools for Web Scraping
+
+Web scraping is a powerful technique that allows your AI agents to autonomously gather and process data from websites. By integrating web scraping, you can enhance the data-driven decision-making capabilities of your AI projects, making them more dynamic and responsive to real-world information. This lesson will guide you through the process of setting up and using CrewAI's ScrapeWebsiteTool to achieve this.
+
+## Setting Up CrewAI Tools
+
+To use CrewAI's built-in web scraping capabilities, you'll need to install the appropriate libraries on your local machine. The primary package you need is crewai-tools, which contains the ScrapeWebsiteTool and other utilities for enhancing your CrewAI agents:
+
+```Bash
+pip install crewai-tools
+```
+
+The crewai-tools package provides a collection of ready-to-use tools that extend the functionality of your CrewAI agents, including web scraping, search capabilities, and more. These tools are designed to work seamlessly with the core CrewAI framework, allowing your agents to interact with external data sources efficiently. If you're working within the CodeSignal environment for this course, you don't need to worry about this installation step, as all the necessary libraries are already pre-installed and ready to use.
+
+## Overview of CrewAI's Built-in ScrapeWebsiteTool
+
+CrewAI provides a built-in tool called ScrapeWebsiteTool designed to gather data from websites. This tool simplifies the process of web scraping by providing a straightforward interface for extracting information. The ScrapeWebsiteTool can be used to collect data such as text, images, and links from web pages, making it a versatile addition to your AI toolkit.
+
+Here's a simple code snippet demonstrating how to use the ScrapeWebsiteTool:
+
+```Python
+from crewai_tools import ScrapeWebsiteTool
+
+# Initialize the scraping tool
+scrape_tool = ScrapeWebsiteTool()
+
+# Use the tool to scrape data from a website
+data = scrape_tool.scrape("https://example.com")
+
+# Print the scraped data
+print(data)
+```
+
+This snippet shows how to initialize the ScrapeWebsiteTool and use it to scrape data from a website. The scrape method takes a URL as input and returns the extracted data, which can then be processed or analyzed further.
+
+## Integrating the ScrapeWebsiteTool
+
+CrewAI provides a built-in tool called ScrapeWebsiteTool designed to gather data from websites. This tool simplifies the process of web scraping by providing a straightforward interface for extracting information. The ScrapeWebsiteTool can be used to collect data such as text, images, and links from web pages, making it a versatile addition to your AI toolkit.
+
+Similar to how we integrated our custom search tool earlier, adding the ScrapeWebsiteTool to our crew follows the same pattern. Let's add it to our existing TravelPlannerCrew class:
+
+```Python
+from crewai import Agent
+from crewai.project import CrewBase, agent
+from crewai_tools import ScrapeWebsiteTool
+from custom_search_tool import CustomSearchTool
+
+@CrewBase
+class TravelPlannerCrew:
+    """A crew for planning travel itineraries using real-time data"""
+    
+    # Configuration file paths...
+    
+    def __init__(self):
+        # Code for loading agent and task configurations...
+        
+        # Initialize the custom search tool    
+        self.search_tool = CustomSearchTool()
+        # Initialize the web scraping tool
+        self.scrape_tool = ScrapeWebsiteTool()
+
+    @agent
+    def researcher(self) -> Agent:
+        """Creates a researcher agent that gathers attraction data and local cultural insights"""
+        return Agent(
+            config=self.agents_data["researcher"],
+            tools=[self.search_tool, self.scrape_tool]  # Provide the scraping tool to the researcher agent
+        )
+```
+
+Just as we did with our search tool, we instantiate the ScrapeWebsiteTool and add it to the researcher agent's toolkit. This gives our agent the ability to not only search for information but also extract detailed data directly from websites.
+
+## Updating Task Configurations for Web Scraping
+
+To effectively utilize the ScrapeWebsiteTool, we need to update our task configurations to explicitly instruct agents to perform web scraping. Let's modify the research_task in the tasks.yaml file to include web scraping steps:
+
+```YAML
+research_task:
+  description: |
+    Research the top {total_attractions} attraction(s) in {city} and gather local customs and cultural insights.
+    1. Search for popular attractions and local customs in {city}.
+    2. Scrape official websites and travel advisories for details such as opening hours, addresses, and cultural tips.
+    3. Compile the information into structured data.
+  expected_output: "A combined list of {total_attractions} attraction(s) with detailed information and local cultural insights for {city}."
+In this updated configuration, we've added a specific step (step 2) that instructs the agent to scrape official websites for detailed information. This explicit instruction ensures that the agent will utilize the ScrapeWebsiteTool we provided earlier.
+```
+
+The key to effective web scraping with CrewAI is to be specific about:
+
+- What websites to target (official attraction sites, travel advisories)
+- What information to extract (opening hours, addresses, cultural tips)
+- How to process the scraped data (compile into structured format)
+
+By including these details in your task description, you guide the agent to make appropriate use of the scraping tool within its workflow.
+
+
+## Observing the ScrapeWebsiteTool in Action
+
+When you run your crew with the ScrapeWebsiteTool, you can observe how the agent uses it to extract detailed information from websites. Let's see what happens when we run our travel planner crew for a trip to Chicago with verbose mode enabled:
+
+```Plain text
+🚀 Crew: crew
+└── 📋 Task: d87f5b60-2499-447f-8d25-06b937287ca7
+       Status: Executing Task...
+    └── 🤖 Agent: Travel Researcher
+            Status: In Progress
+        ├── 🔧 Used DuckDuckGo Search Tool (1)
+        └── 🔧 Used Read website content (1)
+
+# Agent: Travel Researcher
+## Thought: I need to gather detailed information about attractions in Chicago from official websites.
+## Using tool: Read website content
+## Tool Input: 
+"{\"website_url\": \"https://www.timeout.com/chicago/things-to-do/chicago-attractions-the-best-sights-and-attractions-in-chicago\"}"
+## Tool Output: 
+40 Best Chicago Attractions That You Have to Visit in 2025 Go to the content Go to the footer No thanks Subscribe 🙌 Awesome, 
+you're subscribed! Thanks for subscribing! Look out for your first newsletter in your inbox soon! The best of Chicago straight 
+to your inbox We help you navigate a myriad of possibilities. Sign up for our newsletter for the best of the city. Enter email 
+address Déjà vu! We already have this email. Try another? By entering your email address you agree to our Terms of Use and...
+```
+
+In this output, you can see:
+
+1. The agent identifies the need to gather detailed information about Chicago attractions from official websites.
+1. It selects the Read website content tool, which is part of the ScrapeWebsiteTool.
+1. It provides the URL of a website containing information about Chicago attractions.
+1. The tool returns the content of the webpage, which includes a list of attractions and additional information.
+
+This demonstrates how the ScrapeWebsiteTool empowers the agent to extract specific data directly from websites, enabling it to compile a more accurate and comprehensive travel plan for Chicago. The agent can now use this detailed information to enhance the travel itinerary with up-to-date and relevant insights.
