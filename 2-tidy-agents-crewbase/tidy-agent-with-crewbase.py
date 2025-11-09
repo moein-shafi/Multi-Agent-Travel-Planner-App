@@ -8,7 +8,7 @@ def main() -> None:
     crew = travel_planner.travel_crew()
 
     # Define the input variables
-    city = "Cape Town"
+    city = "Isfahan"
     days = 2
     attractions_per_day = 2
     total_attractions = days * attractions_per_day
@@ -41,6 +41,18 @@ def main() -> None:
         print(f"City: {pydantic_output.city}")
         print(f"Days: {pydantic_output.days}")
         print(f"First day attractions: {[a.name for a in pydantic_output.daily_plans[0].attractions]}")
+
+        if pydantic_output.daily_plans[0].meal_suggestions:
+            print(f"Meal suggestions for Day 1: {pydantic_output.daily_plans[0].meal_suggestions}")
+
+        if pydantic_output.overall_tips:
+            print(f"Overall Travel Tips: {pydantic_output.overall_tips}")
+
+    json_output = result.json_dict
+    if json_output:
+        print("\nJSON Output:")
+        print(json_output)
+
 
 
 if __name__ == "__main__":
