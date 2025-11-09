@@ -78,7 +78,7 @@ CrewAI will automatically use the specified model for all agents unless you expl
 
 
 
-## Creating a Simple Agent
+# Creating a Simple Agent
 
 Now that we understand the key concepts and have our environment set up, let's start by creating a simple agent using the CrewAI library. In the code example below, we define a travel agent with specific attributes that shape its behavior.
 
@@ -259,4 +259,117 @@ print(result)
 
 When the `kickoff()` method is called, CrewAI processes the task by replacing the placeholders with the values from the `inputs` dictionary. The travel agent then uses these values to generate a response. The output will be a list of popular attractions in San Diego, formatted according to the expected output defined in the task.
 
+
+# Building a Team of Specialized Travel Agents
+
+
+In this lesson, we'll build a travel planning crew with specialized agents working together to create the perfect vacation itinerary:
+
+- `Travel Researcher`: Our destination expert who hunts down the most interesting attractions, hidden gems, and must-see spots in any city.
+```python
+researcher = Agent(
+    role="Travel Researcher",
+    goal="Find the best attractions and activities",
+    backstory="You are an expert at researching destinations and finding hidden gems."
+)
+```
+
+- `Itinerary Planner`: Our organizational wizard who transforms a list of attractions into a coherent, efficient travel plan.
+
+
+```python
+planner = Agent(
+    role="Itinerary Planner",
+    goal="Create efficient and enjoyable travel plans",
+    backstory="You excel at organizing activities into logical, time-efficient itineraries."
+)
+```
+
+Together, these specialized agents combine their unique skills to deliver a comprehensive travel experience that neither could create alone.
+
+
+## Creating a Workflow with Connected Tasks
+
+Our travel planning crew will complete two interconnected tasks that flow naturally from one to the next:
+
+- `Research Task`: The Travel Researcher will investigate attractions in the target city, providing rich descriptions of each location.
+
+
+```python
+research_task = Task(
+    description="Research the top {total_attractions} attractions in {city} and provide brief descriptions.",
+    expected_output="A list of {total_attractions} attractions in {city} with descriptions and why they're worth visiting.",
+    agent=researcher
+)
+```
+
+
+- `Planning Task`: The Itinerary Planner will take the researcher's findings and craft them into a day-by-day schedule.
+
+
+```python
+planning_task = Task(
+    description="Create a {days}-day itinerary for {city} using only the researched attractions provided in the context.",
+    expected_output="A detailed {days}-day schedule with exactly {attractions_per_day} attractions per day, including timing, transportation tips, and meal suggestions.",
+    agent=planner,
+    context=[research_task]
+)
+```
+
+
+To connect these tasks, we use the `context=[research_task]` parameter when defining our planning task. This parameter tells CrewAI that the planning task needs information from the research task to do its job properly. Think of it as passing the research results directly to the planner so they have all the information they need to create a great itinerary.
+
+
+## Assembling the Travel Planning Crew
+
+With our travel experts defined and their tasks outlined, it's time to bring everything together into a cohesive travel planning team:
+
+```python
+crew = Crew(
+    agents=[researcher, planner],
+    tasks=[research_task, planning_task],
+    process=Process.sequential
+)
+```
+
+
+This crew setup creates our complete travel planning workflow:
+
+- We provide a list of all our agents (`researcher` and `planner`) so the crew knows who's available to work
+
+- We include all the tasks (`research_task` and `planning_task`) that need to be completed
+
+- We set `process=Process.sequential` to ensure tasks run in order - this is crucial since our planning task depends on the results from the research task
+
+The `Process.sequential` parameter is particularly important for our travel planning workflow. It tells CrewAI to execute tasks one after another in the order they appear in the tasks list. This ensures the Travel Researcher completes their work before the Itinerary Planner begins, maintaining our logical workflow from research to planning.
+
+
+## Running the Crew and Analyzing Results
+
+Once the crew is assembled, we can set up dynamic inputs and execute the crew to see how the agents work together. In our example, we calculate the total number of attractions based on the number of days and attractions per day, then pass these values as inputs to the crew:
+
+```python
+# Define input variables
+city = "Barcelona"
+days = 2
+attractions_per_day = 2
+total_attractions = days * attractions_per_day
+
+# Build the dictionary using the variables
+inputs = {
+    "city": city,
+    "days": days,
+    "attractions_per_day": attractions_per_day,
+    "total_attractions": total_attractions
+}
+
+# Run the crew with inputs
+result = crew.kickoff(inputs=inputs)
+
+# Display the result
+print(result)
+```
+
+
+The output will be a detailed itinerary for a 2-day trip to Barcelona, including 4 researched attractions (2 per day), timing, transportation tips, and meal suggestions.
 
