@@ -736,3 +736,237 @@ result = crew.kickoff(inputs=inputs)
 ```
 
 Notice how we first instantiate our TravelPlannerCrew class, then access the travel_crew() method which returns our fully configured Crew object. This is the power of the CrewBase pattern - all the agent and task creation happens behind the scenes when you call the crew method, giving you a clean interface to work with.
+
+
+# Using Pydantic Models for Structured Output
+
+
+Welcome back to the course Expanding CrewAI Capabilities and Integration. In our previous lesson, we explored how to organize and structure agent code using CrewBase in CrewAI projects. This lesson builds on that foundation by introducing you to the use of Pydantic models for structured, validated outputs. Structured outputs are crucial in ensuring that data is consistent, reliable, and easy to integrate with other systems. They help prevent errors and misinterpretations that can arise from unstructured data, thereby enhancing the overall robustness of your applications.
+
+CrewAI enforces structured outputs by leveraging Pydantic models, which provide a framework for data validation and type checking. This ensures that the outputs from CrewAI tasks are not only integration-friendly but also adhere to the expected data formats, making your CrewAI projects more reliable and efficient. By the end of this lesson, you will understand how to leverage Pydantic models to enhance the robustness of your CrewAI projects, particularly in the context of travel itinerary planning.
+
+## Installing and Setting Up Pydantic
+Before we dive into using Pydantic, let's quickly cover how to install it. On your local setup, you can install Pydantic using pip with the following command:
+
+```Bash
+pip install pydantic
+```
+
+However, if you are working within the CodeSignal environment, you don't need to worry about installation, as Pydantic is pre-installed. This allows you to focus on learning and applying Pydantic without the hassle of setup.
+
+
+## Defining the Desired Output Structure
+
+To effectively create Pydantic models for our travel itinerary application, we first need to define a plan for our desired output structure. This ensures that the models align with the requirements and expectations of our application. Below is the expected structure of our output, which will guide the creation of our Pydantic models:
+
+- Travel Itinerary: The overall plan for a trip
+    - City: Name of the city to visit
+    - Days: Number of days in the itinerary
+    - Daily Plans: A list of plans for each day
+        - Day Number: The specific day in the itinerary (e.g., 1 for the first day, 2 for the second day)
+        - Attractions: A list of attractions to visit on this day
+            - Name: Name of the attraction
+            - Description: Brief description of the attraction
+            - Category: Category like 'Museum', 'Historical Site', etc.
+            - Estimated Duration: How long to spend here (e.g., '2 hours')
+            - Address: Physical address, if available
+        - Meal Suggestions: A list of suggested places to eat, if available
+    - Overall Tips: General travel tips for this destination, if available
+
+This structure outlines the key components of a travel itinerary, including the city to visit, the number of days, and detailed daily plans. Each daily plan consists of a list of attractions, each with specific details such as name, description, category, estimated duration, and address. Additionally, there are optional meal suggestions and overall travel tips. This organized structure will be enforced by our Pydantic models to ensure data integrity and consistency.
+
+## Creating Pydantic Models for Travel Itineraries
+
+Now, let's explore how to create Pydantic models for our travel itinerary application. Pydantic models are defined as Python classes that inherit from BaseModel. They provide type checking, default values, and field descriptions, which are crucial for ensuring data integrity.
+
+Consider the following Pydantic models for a travel itinerary:
+
+```python
+from typing import List, Optional
+from pydantic import BaseModel, Field
+
+class Attraction(BaseModel):
+    """Model for a tourist attraction"""
+    name: str = Field(description="Name of the attraction")
+    description: str = Field(description="Brief description of the attraction")
+    category: str = Field(description="Category like 'Museum', 'Historical Site', etc.")
+    estimated_duration: str = Field(description="How long to spend here (e.g., '2 hours')")
+    address: Optional[str] = Field(description="Physical address", default=None)
+
+class DailyPlan(BaseModel):
+    """Model for a single day in the itinerary"""
+    day_number: int = Field(description="Day number in the itinerary")
+    attractions: List[Attraction] = Field(description="List of attractions to visit")
+    meal_suggestions: Optional[List[str]] = Field(description="Suggested places to eat", default=None)
+
+class TravelItinerary(BaseModel):
+    """Model for a complete travel itinerary"""
+    city: str = Field(description="City to visit")
+    days: int = Field(description="Number of days in the itinerary")
+    daily_plans: List[DailyPlan] = Field(description="Plan for each day")
+    overall_tips: Optional[str] = Field(description="General travel tips for this destination", default=None)
+```
+
+These models define the structure of our data, ensuring that each field is of the expected type and providing default values where necessary. Lists, such as List[Attraction] and List[str], are used to represent collections of items, while Optional fields, like Optional[str] and Optional[List[str]], indicate that a field is not mandatory and can be None. The Field function allows us to add descriptions, which can be helpful for documentation and understanding the purpose of each field. For example, descriptions like "Name of the attraction" or "Suggested places to eat" provide clarity on what each field represents.
+
+## Understanding CrewAI's Output Structuring Parameters
+CrewAI provides two main parameters to structure and validate task outputs clearly and effectively:
+
+- `output_json`: Accepts a Pydantic model defining the desired output structure. CrewAI validates and structures the raw output into a JSON-compatible Python dictionary, accessible through result.json_dict. This format is ideal when you need serialization or integration with other systems expecting JSON.
+
+- `output_pydantic`: Also accepts a Pydantic model class but provides deeper validation, converting the output into a fully instantiated and validated Pydantic model instance. This instance is accessible via result.pydantic, offering direct, type-safe attribute access and comprehensive validation (including type checking, required fields, and custom validators).
+
+Both parameters rely on Pydantic models to define output structure. The crucial difference lies in the resulting format: output_json yields a dictionary, while output_pydantic provides a fully instantiated and validated object.
+
+## Integrating Pydantic Models into CrewAI Tasks
+With Pydantic models defined, you can integrate them seamlessly into CrewAI tasks, ensuring structured, validated outputs.
+
+In the TravelPlannerCrew class, use output_pydantic to produce validated model instances:
+
+```python
+from models import TravelItinerary
+
+@task
+def planning_task(self) -> Task:
+    """Creates a planning task with full Pydantic validation"""
+    return Task(
+        config=self.tasks_data["planning_task"],
+        agent=self.planner(),
+        context=[self.research_task()],
+        output_pydantic=TravelItinerary  # Comprehensive Pydantic validation
+    )
+```
+
+
+This approach validates the task's output against the TravelItinerary model, providing type-safe and attribute-based access through result.pydantic.
+
+Alternatively, to obtain outputs as dictionaries suitable for serialization or external systems, use output_json:
+
+```python
+@task
+def planning_task(self) -> Task:
+    """Creates a planning task with structured JSON output"""
+    return Task(
+        config=self.tasks_data["planning_task"],
+        agent=self.planner(),
+        context=[self.research_task()],
+        output_json=TravelItinerary  # Structured output as JSON-compatible dictionary
+    )
+```
+
+Here, CrewAI validates and structures the output following the TravelItinerary model's schema, providing easy dictionary access via result.json_dict.
+
+Internally, CrewAI leverages these parameters by embedding explicit model-based formatting instructions into agent prompts. It instructs the LLM to structure outputs accordingly. If validation initially fails, CrewAI may retry with clearer instructions or raise exceptions, ensuring robust and predictable structured outputs.
+
+## Running the Crew and Inspecting Structured Output
+Let's see how these integrations work in practice by running the crew and inspecting the outputs:
+
+```python
+from travel_planner_crew import TravelPlannerCrew
+
+# Create the crew
+travel_planner = TravelPlannerCrew()
+
+# Define the input variables
+city = "Buenos Aires"
+days = 2
+attractions_per_day = 2
+total_attractions = days * attractions_per_day
+
+# Build the dictionary using the variables
+inputs = {
+    "city": city,
+    "days": days,
+    "attractions_per_day": attractions_per_day,
+    "total_attractions": total_attractions
+}
+
+# Run the crew and get the result
+result = travel_planner.travel_crew().kickoff(inputs=inputs)
+```
+
+## Examining Raw Output
+The raw output is the complete, unstructured text response generated by the agent. It's the most basic form of output and is always available, regardless of the output parameters specified. This output is useful for seeing exactly what the agent produced without any additional processing or formatting:
+
+```python
+# Extract raw output
+raw_output = result.raw
+
+# Print the raw output
+print(raw_output)
+```
+
+
+Here's a simplified example of what the raw output might look like:
+
+```Plain text
+{
+  "city": "Buenos Aires",
+  "days": 2,
+  "daily_plans": [
+    {
+      "day_number": 1,
+      "attractions": [
+        {
+          "name": "The Obelisco",
+          "description": "This iconic monument...",
+          ...
+        },
+        ...
+      ],
+      "meal_suggestions": [
+        "Lunch at a nearby café...",
+        ...
+      ]
+    },
+    ...
+  ],
+  "overall_tips": "Experience public gatherings at The Obelisco..."
+}
+```
+
+The raw output provides a full view of the agent's response, which can be quite detailed and is useful for understanding the context and content generated by the agent.
+
+## Working with JSON Output
+The JSON output is a structured version of the agent's response. When you specify the output_json parameter in your task, CrewAI formats the output into a JSON-compatible dictionary. This makes it easier to work with programmatically, especially if you need to integrate with other systems or serialize the data:
+
+```python
+# Extract JSON output
+json_output = result.json_dict
+
+# Print JSON output (if available)
+if json_output:
+    print(json_output)
+```
+
+Here's a trimmed version of the JSON output:
+
+```Plain text
+{'city': 'Buenos Aires', 'days': 2, 'daily_plans': [{'day_number': 1, 'attractions': [{'name': 'La Boca', 'description': 'Vibrant neighborhood', 'category': 'Cultural', 'estimated_duration': '2-3 hours', 'address': 'Caminito, Buenos Aires'}, ...], 'meal_suggestions': ['Argentine asado', '...']}, ...], 'overall_tips': 'Engage with performers...'}
+```
+
+The JSON output is structured and easy to parse, making it suitable for further processing or integration with other systems. Remember, this output will only be available if you set the output_json parameter in your task.
+
+## Leveraging Pydantic Objects
+The Pydantic output is the most advanced form of output. When you use the output_pydantic parameter in your task, CrewAI converts the response into a fully validated Pydantic object. This allows you to interact with the data in a more intuitive and type-safe manner, ensuring data integrity and making it easier to access specific attributes:
+
+```python
+# Extract Pydantic output
+pydantic_output = result.pydantic
+
+# Work with Pydantic output (if available)
+if pydantic_output:
+    print(f"City: {pydantic_output.city}")
+    print(f"Days: {pydantic_output.days}")
+    print(f"First day attractions: {[a.name for a in pydantic_output.daily_plans[0].attractions]}")
+```
+
+Here's an example of what the Pydantic output might look like:
+
+```Plain text
+City: Buenos Aires
+Days: 2
+First day attractions: ['Recoleta Cemetery', 'Teatro Colón']
+```
+
+The Pydantic output allows you to access the data as attributes of an object, making it straightforward to work with complex nested data structures. This approach ensures that the data adheres to the expected format and types, providing a reliable way to handle the output in your application. Remember, this output will only be available if you set the output_pydantic parameter in your task.
