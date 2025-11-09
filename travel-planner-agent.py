@@ -2,7 +2,7 @@ import argparse
 from crewai import Agent, Task, Crew, Process
 
 DEFAULT_CITY = "Isfahan"
-DEFAULT_COUNT = 3
+DEFAULT_COUNT = 8
 
 
 def parse_args() -> argparse.Namespace:
@@ -23,11 +23,17 @@ def main() -> None:
     )
 
     travel_task = Task(
-        description=f"Suggest {args.count} popular attractions to visit in {args.city}.",
-        expected_output=f"A list of {args.count} attractions in {args.city} with short descriptions.",
+        description="Suggest {num_attractions} popular attractions to visit in {city}.",
+        expected_output="A list of {num_attractions} attractions in {city} with short descriptions.",
         agent=travel_agent
     )
 
+    # Set up inputs for the task
+    inputs = {
+        "city": args.city,
+        "num_attractions": args.count
+    }
+    
     # Put agents and tasks together and run sequentially
     crew = Crew(
         agents=[travel_agent],
@@ -37,7 +43,7 @@ def main() -> None:
     )
 
     try:
-        result = crew.kickoff()
+        result = crew.kickoff(inputs=inputs)
         print(result)
     except Exception as e:
         print("Error running crew:", e)
