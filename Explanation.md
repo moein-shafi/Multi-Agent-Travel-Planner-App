@@ -78,7 +78,7 @@ CrewAI will automatically use the specified model for all agents unless you expl
 
 
 
-# Creating a Simple Agent
+# 1- Creating a Simple Agent
 
 Now that we understand the key concepts and have our environment set up, let's start by creating a simple agent using the CrewAI library. In the code example below, we define a travel agent with specific attributes that shape its behavior.
 
@@ -561,3 +561,178 @@ print(result)
 The crew is created and executed as before, but now with agents and tasks that are configured through external YAML files. The `inputs` dictionary provides values for the placeholders in our task descriptions, making our workflow adaptable to different scenarios without code changes.
 
 
+
+# 2- Tidy Agent Code with CrewBase 
+
+
+In this lesson, we will focus on organizing and structuring agent code using CrewBase in CrewAI projects. The objective is to help you understand how tidy, well-organized code can enhance the efficiency and maintainability of your projects. By the end of this lesson, you will be able to create a travel planning crew using CrewAI, which will serve as a foundation for more complex integrations in future lessons.
+
+Tidy and well-organized code is crucial in any software project, and CrewAI is no exception. It ensures that your code is easy to read, understand, and modify, which is essential for collaboration and long-term project success. Let's dive into the fundamentals of CrewBase and how it helps in structuring your CrewAI projects.
+
+## Understanding CrewBase Fundamentals
+CrewBase is a foundational component in CrewAI that helps you organize your code in a clean and efficient way. It provides a framework for grouping together agents, tasks, and crews so your project stays tidy and easy to manage. In CrewBase, you’ll see special symbols like @agent, @task, and @crew placed above certain functions—these are called decorators in Python. Decorators are a feature in Python that let you add extra behavior or meaning to functions or classes. In CrewBase, these decorators tell CrewAI which functions are responsible for creating agents, tasks, or crews, making your code more organized and easier to understand.
+
+```python
+from crewai import Agent, Task, Crew, Process
+from crewai.project import CrewBase, agent, crew, task
+
+@CrewBase
+class SimpleCrew:
+    
+    @agent
+    def researcher(self) -> Agent:
+        return Agent(
+            role="Researcher",
+            goal="Find accurate information",
+            backstory="You are an expert at finding information quickly and accurately."
+        )
+    
+    @task
+    def research_task(self) -> Task:
+        return Task(
+            description="Research the given topic thoroughly",
+            agent=self.researcher()
+        )
+    
+    @crew
+    def simple_crew(self) -> Crew:
+        return Crew(
+            agents=[self.researcher()],
+            tasks=[self.research_task()],
+            process=Process.sequential
+        )
+```
+
+The @agent decorator is used to define agents, which are the building blocks of your CrewAI project. The @task decorator is used to define tasks, which are specific actions or processes that agents perform. Finally, the @crew decorator is used to define crews, which are collections of agents and tasks working together to achieve a common goal.
+
+## Structuring a Travel Planner with CrewBase Class
+
+Let's explore how to create a well-structured travel planner using CrewBase. We'll examine the TravelPlannerCrew class, which provides an organized framework for planning comprehensive travel itineraries while demonstrating best practices for code organization in CrewAI projects.
+
+```python
+import os
+import yaml
+from crewai import Agent, Task, Crew, Process
+from crewai.project import CrewBase, agent, crew, task
+
+@CrewBase
+class TravelPlannerCrew:
+    """A crew for planning travel itineraries"""
+    
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    agents_config_path = os.path.join(base_dir, "config", "agents.yaml")
+    tasks_config_path = os.path.join(base_dir, "config", "tasks.yaml")
+    
+    def __init__(self):
+        with open(self.agents_config_path, 'r') as file:
+            self.agents_data = yaml.safe_load(file)
+            
+        with open(self.tasks_config_path, 'r') as file:
+            self.tasks_data = yaml.safe_load(file)
+```
+
+The class uses configuration files, agents.yaml and tasks.yaml, to load data for agents and tasks. These configuration files allow you to separate the configuration data from the code, making it easier to manage and update. The TravelPlannerCrew class reads these files during initialization and uses the data to create agents and tasks.
+
+
+## Tidy Agent Code with the @agent Decorator
+
+The @agent decorator simplifies the creation of agents by providing a clear and concise way to define them. In the TravelPlannerCrew class, we define two agents: a researcher and a planner.
+
+```python
+@agent
+def researcher(self) -> Agent:
+    """Creates a researcher agent"""
+    return Agent(
+        config=self.agents_data["researcher"]
+    )
+
+@agent
+def planner(self) -> Agent:
+    """Creates a planner agent"""
+    return Agent(
+        config=self.agents_data["planner"]
+    )
+```
+
+Each agent method is decorated with @agent, indicating that it creates an agent. The agent configuration is loaded from the agents.yaml file, which keeps the code clean and separates the configuration from the implementation. This approach makes it easy to modify agent properties without changing the code structure.
+
+
+
+## Organizing Tasks with the @task Decorator
+
+The @task decorator helps organize tasks in a clean and maintainable way. In our TravelPlannerCrew class, we define two tasks: a research task and a planning task.
+
+```python
+@task
+def research_task(self) -> Task:
+    """Creates a research task"""
+    return Task(
+        config=self.tasks_data["research_task"],
+        agent=self.researcher()
+    )
+
+@task
+def planning_task(self) -> Task:
+    """Creates a planning task"""
+    return Task(
+        config=self.tasks_data["planning_task"],
+        agent=self.planner(),
+        context=[self.research_task()]
+    )
+```
+
+The research_task method creates a task assigned to the researcher agent, while the planning_task method creates a task assigned to the planner agent.
+
+
+
+## Creating a Crew with the @crew Decorator
+
+The @crew decorator is used to define the crew, which brings together agents and tasks into a cohesive unit. In our TravelPlannerCrew class, we define a travel_crew method that creates the travel planning crew.
+
+```python
+@crew
+def travel_crew(self) -> Crew:
+    """Creates the travel planning crew"""
+    return Crew(
+        agents=self.agents,
+        tasks=self.tasks,
+        process=Process.sequential
+    )
+```
+
+The travel_crew method creates a crew that includes all the defined agents and tasks, organizing them into a sequential process. The self.agents and self.tasks properties are automatically populated by CrewBase based on the methods decorated with @agent and @task, respectively.
+
+
+
+## Using the Travel Planner Crew
+
+Once the TravelPlannerCrew class is defined, using it is straightforward. The key is understanding how to instantiate the class and access the crew you've defined with the @crew decorator:
+
+```python
+from travel_planner_crew import TravelPlannerCrew
+
+# Create an instance of our CrewBase class
+travel_planner = TravelPlannerCrew()
+
+# Access the crew method we decorated with @crew
+crew = travel_planner.travel_crew()
+
+# Define the input variables
+city = "Cape Town"
+days = 2
+attractions_per_day = 2
+total_attractions = days * attractions_per_day
+
+# Build a dictionary using the variables
+inputs = {
+    "city": city,
+    "days": days,
+    "attractions_per_day": attractions_per_day,
+    "total_attractions": total_attractions
+}
+
+# Run the crew with inputs
+result = crew.kickoff(inputs=inputs)
+```
+
+Notice how we first instantiate our TravelPlannerCrew class, then access the travel_crew() method which returns our fully configured Crew object. This is the power of the CrewBase pattern - all the agent and task creation happens behind the scenes when you call the crew method, giving you a clean interface to work with.
