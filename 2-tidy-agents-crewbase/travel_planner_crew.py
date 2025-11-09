@@ -2,6 +2,7 @@ import os
 import yaml
 from crewai import Agent, Task, Crew, Process
 from crewai.project import CrewBase, agent, crew, task    
+from crewai_tools import ScrapeWebsiteTool
 
 from models import TravelItinerary
 from custom_search_tool import CustomSearchTool
@@ -10,13 +11,14 @@ from custom_search_tool import CustomSearchTool
 @CrewBase
 class TravelPlannerCrew:
     """A crew for planning travel itineraries using real-time data"""
-    
+
     base_dir = os.path.dirname(os.path.abspath(__file__))
     # agents_config_path = os.path.join(base_dir, "config", "agents.yaml")
     # tasks_config_path = os.path.join(base_dir, "config", "tasks.yaml")
 
     agents_config_path = os.path.join(base_dir, "config", "agents-with-search-tools.yaml") # Updated to use agents config with search tool
-    tasks_config_path = os.path.join(base_dir, "config", "tasks-with-search-tools.yaml") # Updated to use tasks config with search tool
+    # tasks_config_path = os.path.join(base_dir, "config", "tasks-with-search-tools.yaml") # Updated to use tasks config with search tool
+    tasks_config_path = os.path.join(base_dir, "config", "tasks-with-scrapping-tools.yaml") # Updated to use tasks config with scrapping tool
 
 
     def __init__(self):
@@ -28,13 +30,15 @@ class TravelPlannerCrew:
 
         # Initialize the custom search tool    
         self.search_tool = CustomSearchTool()
+        # Initialize the web scraping tool
+        self.scrape_tool = ScrapeWebsiteTool()
 
     @agent
     def researcher(self) -> Agent:
         """Creates a researcher agent"""
         return Agent(
             config=self.agents_data["researcher"],
-            tools=[self.search_tool]  # Provide the search tool to the researcher agent
+            tools=[self.search_tool, self.scrape_tool]  # Provide the scraping tool to the researcher agent
         )
 
     @agent
