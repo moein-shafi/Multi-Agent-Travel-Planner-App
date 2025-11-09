@@ -970,3 +970,162 @@ First day attractions: ['Recoleta Cemetery', 'Teatro Colón']
 ```
 
 The Pydantic output allows you to access the data as attributes of an object, making it straightforward to work with complex nested data structures. This approach ensures that the data adheres to the expected format and types, providing a reliable way to handle the output in your application. Remember, this output will only be available if you set the output_pydantic parameter in your task.
+
+
+
+
+# Creating and Integrating a Custom Search Tool
+
+In our previous lessons, you learned how to organize agent code using CrewBase and how to use Pydantic models for structured outputs. These foundational skills are crucial as we move forward to enhance the functionality of our CrewAI projects.
+
+One of the most powerful aspects of CrewAI is the ability to equip agents with tools that extend their capabilities beyond just reasoning. Tools allow agents to interact with external systems, retrieve information, and perform actions in the real world. Search tools are particularly valuable as they enable agents to access up-to-date information from the web, making their responses more accurate and relevant.
+
+There are many search tools that you can easily integrate into your crew, but most of them require you to set up a payment method and use API keys. In this lesson, we will learn how to create and integrate our own free search tool using DuckDuckGo. We'll cover not only how to create custom tools but also how agents are given access to these tools within the CrewAI framework.
+
+By the end of this lesson, you will understand the process of creating custom tools, specifically a search tool that doesn't require API keys, and how to properly configure agents to utilize these tools in their decision-making processes. This knowledge will empower you to extend your CrewAI projects with custom capabilities while avoiding unnecessary costs.
+
+## Installing Additional Libraries
+
+Before we dive into building our custom search tool, let's ensure our environment is ready. For this lesson, we will use two key libraries: LangChain Community and DuckDuckGoSearch. These libraries will enable us to perform web searches and integrate them into our CrewAI project.
+
+To install these libraries on your local machine, you can use the following pip commands:
+
+```Bash
+# Install langchain-community which provides the DuckDuckGoSearchResults tool
+pip install langchain-community
+
+# Install duckduckgo-search which enables web searches without requiring API keys
+pip install duckduckgo-search
+```
+
+Once again, if you are working within the CodeSignal environment, you don't need to worry about installation, as these libraries are pre-installed.
+
+## Building the Custom Search Tool
+
+Now, let's build our custom search tool. We will create a new tool by subclassing BaseTool from the crewai.tools module. This custom tool will use DuckDuckGoSearchResults from the langchain_community.tools module to perform web searches.
+
+Here's how you can define the CustomSearchTool:
+
+```Python
+from crewai.tools import BaseTool
+from langchain_community.tools import DuckDuckGoSearchResults
+
+# Create a custom tool by subclassing BaseTool
+class CustomSearchTool(BaseTool):
+    # Define the tool's name that will be displayed to the agent
+    name: str = "DuckDuckGo Search Tool"
+    # Provide a description that helps the agent understand when to use this tool
+    description: str = "Search the web using DuckDuckGo (free)."
+
+    def _run(self, query: str) -> str:
+        # Instantiate the underlying LangChain tool
+        ddg_tool = DuckDuckGoSearchResults()
+        # Use the tool to perform the search
+        response = ddg_tool.invoke(query)
+        # Return the search results from DuckDuckGo to the agent
+        return response
+```
+
+In this code, we define a class CustomSearchTool that inherits from BaseTool. The _run method is where the search logic resides. It uses DuckDuckGoSearchResults to perform a web search based on the query provided. The result is then returned as a response.
+
+
+## Integrating the Custom Search Tool into the Travel Planner Crew
+
+With our custom search tool ready, the next step is to integrate it into the travel planner crew. This involves adding the tool within the crew's initialization and ensuring it is accessible to the relevant agents and tasks.
+
+In the TravelPlannerCrew class, we initialize the CustomSearchTool and integrate it with the researcher agent:
+
+```Python
+from crewai import Agent
+from crewai.project import CrewBase, agent
+from custom_search_tool import CustomSearchTool
+
+@CrewBase
+class TravelPlannerCrew:
+    """A crew for planning travel itineraries using real-time data"""
+    
+    # Configuration file paths...
+    
+    def __init__(self):
+        # Code for loading agent and task configurations...
+        
+        # Initialize the custom search tool    
+        self.search_tool = CustomSearchTool()
+
+    @agent
+    def researcher(self) -> Agent:
+        """Creates a researcher agent"""
+        return Agent(
+            config=self.agents_data["researcher"],
+            tools=[self.search_tool]  # Provide the search tool to the researcher agent
+        )
+```
+
+Here, the CustomSearchTool is instantiated and assigned to self.search_tool. The researcher agent is then created with access to this tool, allowing it to perform web searches as part of its tasks.
+
+
+
+## Updating Agent and Task Configurations
+
+With our custom search tool ready, we need to update our agent and task configurations to fully leverage this new capability. The agent configuration should emphasize the use of web search tools, while the task configuration should explicitly instruct the agent to perform searches.
+
+Let's update the researcher agent configuration in agents.yaml:
+
+```YAML
+researcher:
+  role: "Travel Researcher"
+  goal: "Find the best attractions, activities, and local cultural insights using real-time web data"
+  backstory: "You are an expert at researching destinations, using the latest information from the web to uncover hidden gems and local customs."
+```
+
+This configuration emphasizes that the researcher uses "real-time web data" and is an expert at "using the latest information from the web." These phrases signal to the agent that it should utilize the search tool we've provided.
+
+Similarly, we need to update the research task in tasks.yaml to explicitly instruct the agent to perform web searches:
+
+```YAML
+research_task:
+  description: |
+    Research the top {total_attractions} attractions in {city} and gather local customs and cultural insights.
+    1. Search for popular attractions and local customs in {city}.
+    2. Compile the information into structured data.
+  expected_output: "A combined list of {total_attractions} attraction(s) with detailed information and local cultural insights for {city}."
+```
+
+The task description now includes a clear instruction to "Search for popular attractions and local customs," which encourages the agent to use the search tool we've provided.
+
+By aligning our agent and task configurations with the capabilities of our custom search tool, we ensure that the agent understands when and how to use the tool effectively during the execution of its tasks.
+
+## Observing the Tool in Action
+
+When you run your crew with the custom search tool, you can observe how the agent uses it to gather information. Let's see what happens when we run our travel planner crew for a trip to Dubai with verbose mode enabled:
+
+```Plain text
+🚀 Crew: crew
+└── 📋 Task: d1f30b34-c44e-43de-bda8-5022fc92495c
+       Status: Executing Task...
+    └── 🤖 Agent: Travel Researcher
+            Status: In Progress
+        └── 🔧 Used DuckDuckGo Search Tool (1)
+
+# Agent: Travel Researcher
+## Thought: I need to search for popular attractions and local customs in Dubai to gather detailed information.
+## Using tool: DuckDuckGo Search Tool
+## Tool Input: 
+"{\"query\": \"top attractions in Dubai and local customs cultural insights\"}"
+## Tool Output: 
+snippet: Remember to dress modestly, be respectful of religious sites, and observe local customs and etiquette. 
+Engage with the local culture through food,  markets, and festivals, and be open to learning from the Emirati community. 
+By doing so, you'll gain a deeper understanding and appreciation  for Dubai's rich cultural heritage., title: Dubai Cultural Guide: 
+Understanding Local Traditions and Customs, link: 
+https://www.consultancy-emirates.com/visit-dubai/cultural-insights/dubai-cultural-guide-understanding-local-traditions-and-customs/, ...
+```
+
+In this output, you can see:
+
+1. The agent identifies the need to search for information about Dubai attractions and customs
+1. It selects the DuckDuckGo Search Tool we provided
+1. It formulates a search query combining both attractions and cultural insights
+1. The tool returns real search results with snippets from various websites about Dubai's culture, attractions, and customs
+
+This demonstrates how our custom search tool empowers the agent with the ability to access up-to-date information from the web. The agent can now use these search results to compile a more accurate and comprehensive travel plan for Dubai, including both popular attractions and important cultural insights that travelers should be aware of.
+
