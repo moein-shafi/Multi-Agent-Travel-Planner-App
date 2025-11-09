@@ -373,3 +373,191 @@ print(result)
 
 The output will be a detailed itinerary for a 2-day trip to Barcelona, including 4 researched attractions (2 per day), timing, transportation tips, and meal suggestions.
 
+
+
+# Challenges of Hard-Coded Configurations
+
+
+1. `Limited Maintainability`: When configurations are embedded in code, even small changes require modifying the source code, which can introduce bugs.
+
+1. `Reduced Flexibility`: Hard-coded configurations make it difficult to adapt your agents and tasks for different scenarios without code changes.
+
+1. `Poor Separation of Concerns`: Mixing business logic with configuration details violates the principle of separation of concerns, making code harder to understand and maintain.
+
+1. `Collaboration Barriers`: When working in teams, non-technical stakeholders cannot easily review or modify configurations without developer assistance.
+
+By externalizing configurations to YAML files, we can address these challenges and create more robust, adaptable CrewAI workflows that are easier to maintain as your projects grow in complexity.
+
+
+
+## YAML Basics
+
+YAML, which stands for "YAML Ain't Markup Language", is a human-readable data serialization format that is commonly used for configuration files. Its syntax is simple and intuitive, making it an excellent choice for defining configuration data. YAML uses indentation to represent structure, similar to Python, and supports complex data types such as lists and dictionaries. This makes it ideal for representing hierarchical data, such as the configurations of agents and tasks in CrewAI.
+
+## Externalizing Agent Configurations
+
+Now that we understand YAML basics, let's examine how to apply this format to externalize agent configurations in CrewAI. Consider the following agents.yaml file:
+
+```YAML
+researcher:
+  role: "Travel Researcher"
+  goal: "Find the best attractions, activities, and local cultural insights."
+  backstory: "You are an expert at researching destinations, using the latest information from the web to uncover hidden gems and local customs."
+  
+planner:
+  role: "Itinerary Planner"
+  goal: "Create efficient and enjoyable travel plans"
+  backstory: "You excel at organizing activities into logical, time-efficient itineraries."
+```
+
+
+In this file, we define two agents: a Travel Researcher and an Itinerary Planner. Each agent has a role, a goal, and a backstory. By using YAML, we can easily modify these attributes without altering the main codebase. This separation of concerns enhances the maintainability of our CrewAI projects.
+
+
+## Externalizing Task Configurations
+
+
+Next, let's look at how to externalize task configurations with a YAML file. Here is the `tasks.yaml` file:
+
+```YAML
+research_task:
+  description: |
+    Research the top {total_attractions} attractions in {city} and gather local customs and cultural insights.
+  expected_output: "A combined list of {total_attractions} attraction(s) with detailed information and local cultural insights for {city}."
+  
+planning_task:
+  description: |
+    Create a {days}-day itinerary for {city} using only the researched attractions provided in the context.
+    Include:
+    1. A logical sequence {attractions_per_day} attractions for each day.
+    2. Transportation recommendations between locations.
+    3. Meal suggestions respecting local dining customs.
+    4. Key cultural considerations for each activity.
+  expected_output: "A detailed {days}-day schedule with exactly {attractions_per_day} attractions per day, including timing, transportation tips, meal suggestions, and cultural guidance."
+```
+
+In this file, we define two tasks: a research task and a planning task. Each task has a description and an expected output. Notice the pipe symbol (`|`) after the description key - this YAML feature preserves line breaks in the text that follows, allowing for multi-line descriptions that maintain their formatting.
+
+The use of placeholders, such as `{total_attractions}`, `{city}`, `{days}`, and `{attractions_per_day}`, allows for dynamic input, making the tasks adaptable to different scenarios. By externalizing task configurations, we can easily update task details and dependencies without modifying the core code.
+
+
+
+## Project Structure for YAML Configuration
+
+Before diving into loading the configuration files, let's examine our project structure with externalized YAML configurations:
+
+```Plain text
+app/
+│
+├── config/             # Directory for all configuration files
+│   ├── agents.yaml     # Agent configurations
+│   └── tasks.yaml      # Task configurations
+│
+└── main.py             # Main application code
+```
+
+This structure separates our configuration data from our application code, making it easier to maintain and update. The `config` directory contains all YAML files, keeping our configurations organized in one place.
+
+Now that we have our configurations in YAML files, let's integrate them into the CrewAI workflow.
+
+## Loading YAML Configuration Files
+First, we need to determine the base directory, locate our YAML files in the `config` directory, and load them safely:
+
+```Python
+import os
+import yaml
+
+# Determine the base directory of the current file
+base_dir = os.path.dirname(os.path.abspath(__file__))
+
+# Construct the path to the agents configuration file
+agents_config_path = os.path.join(base_dir, "config", "agents.yaml")
+
+# Construct the path to the tasks configuration file
+tasks_config_path = os.path.join(base_dir, "config", "tasks.yaml")
+
+# Open and load the agents configuration file
+with open(agents_config_path, 'r') as file:
+    agents_data = yaml.safe_load(file)
+
+# Open and load the tasks configuration file
+with open(tasks_config_path, 'r') as file:
+    tasks_data = yaml.safe_load(file)
+```
+
+This code performs three essential steps to safely load our YAML configuration files:
+
+1. **Determines the base directory**: Finds the absolute path of the directory containing our script, ensuring we can locate configuration files regardless of where the script is executed from.
+
+1. **Constructs file paths**: Builds the complete paths to our configuration files stored in the `config` subdirectory, maintaining proper file organization.
+
+1. **Safely loads YAML content**: Uses PyYAML's `safe_load()` method to parse the YAML content into Python dictionaries, which protects against potentially malicious YAML content while converting the configuration data into usable Python objects.
+
+## Creating Agents and Tasks from Configurations
+
+With our configuration data now loaded into Python dictionaries, we can proceed to create our Agent and Tasks objects using the `config` parameter:
+
+```Python
+from crewai import Agent, Task
+
+# Create agents using the loaded configurations
+researcher = Agent(
+    config=agents_data["researcher"]
+)
+
+planner = Agent(
+    config=agents_data["planner"]
+)
+
+# Create tasks using the loaded configurations
+research_task = Task(
+    config=tasks_data["research_task"],
+    agent=researcher
+)
+
+planning_task = Task(
+    config=tasks_data["planning_task"],
+    agent=planner,
+    context=[research_task]
+)
+```
+Notice how we pass the configuration data directly to the `config` parameter of the Agent and Task constructors. CrewAI will automatically map the YAML properties to the appropriate attributes of the objects.
+
+## Building and Executing the Crew
+
+Finally, we build the crew and execute the workflow, which should be familiar from previous lessons:
+
+```Python
+from crewai import Crew, Process
+
+# Create a crew with the configured agents and tasks
+crew = Crew(
+    agents=[researcher, planner],
+    tasks=[research_task, planning_task],
+    process=Process.sequential
+)
+
+# Define the input variables
+city = "Istanbul"
+days = 2
+attractions_per_day = 2
+total_attractions = days * attractions_per_day
+
+# Build the dictionary using the variables
+inputs = {
+    "city": city,
+    "days": days,
+    "attractions_per_day": attractions_per_day,
+    "total_attractions": total_attractions
+}
+
+# Run the crew with inputs
+result = crew.kickoff(inputs=inputs)
+
+# Display the result
+print(result)
+```
+
+The crew is created and executed as before, but now with agents and tasks that are configured through external YAML files. The `inputs` dictionary provides values for the placeholders in our task descriptions, making our workflow adaptable to different scenarios without code changes.
+
+
