@@ -23,6 +23,24 @@ def main() -> None:
 
     # Run the crew with inputs
     result = crew.kickoff(inputs=inputs)
+    print("Final Itinerary:")
+    print(result)
+
+    # Extract raw output
+    raw_output = result.raw
+
+    # Print the raw output
+    print("\nRaw Output:")
+    print(raw_output)
+
+    # Extract Pydantic output
+    pydantic_output = result.pydantic
+
+    # Work with Pydantic output (if available)
+    if pydantic_output:
+        print(f"City: {pydantic_output.city}")
+        print(f"Days: {pydantic_output.days}")
+        print(f"First day attractions: {[a.name for a in pydantic_output.daily_plans[0].attractions]}")
 
 
 if __name__ == "__main__":

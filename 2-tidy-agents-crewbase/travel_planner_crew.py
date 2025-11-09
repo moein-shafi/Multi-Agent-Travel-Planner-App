@@ -2,6 +2,7 @@ import os
 import yaml
 from crewai import Agent, Task, Crew, Process
 from crewai.project import CrewBase, agent, crew, task    
+from models import TravelItinerary
 
 
 @CrewBase
@@ -43,12 +44,15 @@ class TravelPlannerCrew:
 
     @task
     def planning_task(self) -> Task:
-        """Creates a planning task"""
+        """Creates a planning task with full Pydantic validation"""
         return Task(
             config=self.tasks_data["planning_task"],
             agent=self.planner(),
-            context=[self.research_task()]
+            context=[self.research_task()],
+            output_pydantic=TravelItinerary  # Comprehensive Pydantic validation
+            # output_json=TravelItinerary  # Structured output as JSON-compatible dictionary
         )
+
 
     @crew
     def travel_crew(self) -> Crew:
