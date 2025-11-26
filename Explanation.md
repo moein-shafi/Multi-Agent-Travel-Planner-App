@@ -1260,3 +1260,230 @@ In this output, you can see:
 1. The tool returns the content of the webpage, which includes a list of attractions and additional information.
 
 This demonstrates how the ScrapeWebsiteTool empowers the agent to extract specific data directly from websites, enabling it to compile a more accurate and comprehensive travel plan for Chicago. The agent can now use this detailed information to enhance the travel itinerary with up-to-date and relevant insights.
+
+
+# 3- Creating a Travel Planner RESTful API with Flask
+
+## Introduction and Lesson Overview
+Welcome to the first lesson of our course, Building a CrewAI-Powered Travel Planner App with Flask. In this lesson, we will embark on an exciting journey to create a RESTful API using Flask, a popular web framework for Python. This API will serve as the backbone of our travel planner application, allowing users to submit travel planning requests and receive structured itinerary responses. Our API will integrate seamlessly with the CrewAI travel planner crew, which you have previously learned to work with. By the end of this lesson, you will have a solid understanding of how to set up and run a Flask application that interacts with CrewAI to deliver personalized travel plans.
+
+## Setting Up Flask
+Flask is a lightweight and flexible web framework that is perfect for building small to medium-sized web applications. It provides the tools needed to create web servers and handle HTTP requests. To get started with Flask on your local device, you would typically install it using `pip` with the command:
+
+```Bash
+pip install Flask
+```
+
+
+### Structuring the Project
+Our project will be organized in a structured manner to support the design and functionality of our API. Here's how we'll organize our files:
+
+```Plain text
+app/
+├── main.py                        # Main application file
+└── travel_planner/
+    ├── travel_planner_crew.py     # Main travel planner logic
+    ├── models/
+    │   ├── daily_plan.py          # Daily planning model
+    │   ├── travel_itinerary.py    # Itinerary model
+    │   └── attraction.py          # Attraction model
+    ├── tools/
+    │   └── custom_search_tool.py  # Custom search tool
+    └── config/
+        ├── tasks.yaml             # Task configurations
+        └── agents.yaml            # Agent configurations
+```
+
+The `main.py` file will house the core logic of our Flask application, including initializing the app, defining routes, and handling requests. The `travel_planner` directory contains all the CrewAI-related components:
+
+- `travel_planner_crew.py` implements the main travel planning logic
+- The `models` directory contains Pydantic models for structuring our data
+- The `tools` directory includes tools like our custom search tool
+- The `config` directory stores YAML configuration files for tasks and agents
+
+This modular structure ensures our code is organized, maintainable, and scalable as we build more complex features throughout the course.
+
+### Initializing the Flask Application
+To create our Flask application, we need to import the necessary modules and initialize the Flask app. Here's how we do it:
+
+```Python
+
+from flask import Flask, request, jsonify
+from travel_planner.travel_planner_crew import TravelPlannerCrew
+
+# Initialize Flask application
+app = Flask(__name__)
+```
+In this code snippet:
+
+- We import the Flask class along with the `request` and `jsonify` functions from the Flask package
+    - The `request` object allows us to access incoming request data
+    - The `jsonify` function helps us convert Python dictionaries to JSON responses
+- We import our `TravelPlannerCrew` class from the travel_planner module
+- The line `app = Flask(__name__)` creates a new Flask application instance
+
+The `__name__` parameter is a Python special variable that gets set to the name of the module in which it is used. This helps Flask determine the root path of the application, which is essential for locating resources like templates and static files.
+
+## Creating the Travel Planning Endpoint
+The heart of our API is the `/api/plan` endpoint, which will handle travel planning requests. This endpoint will be designed to accept `POST` requests, allowing users to submit data such as the city they wish to visit, the number of days they plan to stay, and the number of attractions they want to see each day. Here is a snippet of the code that sets up this endpoint:
+
+```Python
+@app.route('/api/plan', methods=['POST'])
+def plan_trip():
+    # This function handles POST requests to the /api/plan endpoint
+```
+
+This code snippet shows how we define a route in Flask using the `@app.route` decorator. The `plan_trip` function will process the incoming request and return an appropriate response. When a user submits a travel planning request to this endpoint, Flask will automatically route the request to this function, which will then extract the necessary information, process it, and return a customized travel itinerary.
+
+## Processing Form Data and Error Handling
+For our travel planner API, we'll use form data to receive user inputs. Form data is a common way to submit information from web forms to servers. Flask makes it easy to access this data through the `request.form` object. Here's how we extract and process the form data, along with proper error handling:
+
+```Python
+@app.route('/api/plan', methods=['POST'])
+def plan_trip():
+    try:
+        # Get form data
+        city = request.form.get('city')
+        days = int(request.form.get('days'))
+        attractions_per_day = int(request.form.get('attractions_per_day'))
+
+        # Calculate total attractions needed
+        total_attractions = days * attractions_per_day
+
+        # Further processing will be done here...
+        
+    except Exception as e:
+        # Return an error message if there is an exception in the request processing
+        return jsonify({"error": str(e)}), 400
+```
+
+In this code:
+
+- We use `request.form.get()` to retrieve values from the submitted form
+- We convert numeric values from strings to integers using `int()`
+- We perform a simple calculation to determine the total number of attractions needed for the trip
+- We wrap everything in a try-except block to catch any errors that might occur during processing
+- If an error occurs (e.g., missing form fields or invalid data types), we return a JSON response with a 400 status code (Bad Request) and an error message
+
+This robust approach ensures our API can gracefully handle invalid inputs while providing clear feedback to users about what went wrong.
+
+
+## Integrating with the CrewAI Travel Planner
+
+To generate a travel plan, we will integrate our API with the `CrewAI` travel planner. This involves using the `TravelPlannerCrew` class to initiate the travel planning process. We will prepare the necessary input parameters and invoke the travel crew to generate a personalized itinerary. Here is how this integration looks in code:
+
+```Python
+@app.route('/api/plan', methods=['POST'])
+def plan_trip():
+    try:
+        # Get form data and calculate total attractions needed...
+
+        try:
+            # Initialize the TravelPlannerCrew instance
+            travel_planner = TravelPlannerCrew()
+            
+            # Run the crew
+            result = travel_planner.travel_crew().kickoff(inputs={
+                "city": city,
+                "days": days,
+                "attractions_per_day": attractions_per_day,
+                "total_attractions": total_attractions
+            })
+        except Exception as e:
+            # Return an error message if there is an exception during crew execution
+            return jsonify({"error": f"Error generating travel plan: {str(e)}"}), 500
+
+        # Further processing will be done here...
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+```
+
+This code demonstrates how we create an instance of `TravelPlannerCrew` and use it to kick off the travel planning process with the provided inputs. Notice the nested try-except block that specifically catches errors during the crew execution process. If something goes wrong while the CrewAI agents are working (such as API rate limits, connection issues, or agent failures), we return a 500 status code (Internal Server Error) with a descriptive error message. This separation of error handling allows us to distinguish between client-side errors (400 Bad Request) and server-side errors (500 Internal Server Error), providing more precise feedback to the client.
+
+### Returning the Travel Itinerary as JSON
+Once our CrewAI travel planner has generated an itinerary, we need to return it to the client in a structured JSON format. The Pydantic models we've defined help ensure our data is properly formatted and validated before being sent back to the user.
+
+```Python
+@app.route('/api/plan', methods=['POST'])
+def plan_trip():
+    try:
+        # Get form data and calculate total attractions needed...
+        
+        # Create the crew and run it...
+
+        # Check if the result has a pydantic model
+        if result.pydantic:
+            # Return the pydantic output in JSON format
+            return jsonify(result.pydantic.model_dump())
+        
+        # Return an error message if no itinerary is generated
+        return jsonify({"error": "No travel itinerary generated"}), 404
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+```
+The `jsonify` function from Flask automatically converts our Python dictionary (created by `model_dump()`) into a proper JSON response with the appropriate Content-Type headers, ensuring that clients can easily parse and use the data we return. If the result is not a Pydantic model, we return an error message indicating that no travel itinerary was generated, along with a 404 status code, to inform the client that the requested resource could not be found or created due to the absence of a valid itinerary.
+
+## Running the Flask API
+To see our API in action, we need to run the Flask server. This is done by executing the `app.run()` function, which starts the server on a specified host and port. In our case, we will run the server on all network interfaces, `port 3000`, with debug mode enabled for easier troubleshooting. Here is how you can start the server:
+
+```Python
+if __name__ == '__main__':
+    # Only run the app when this file is executed directly
+    app.run(
+        host='0.0.0.0',  # Listen on all network interfaces
+        port=3000,       # Run on port 3000
+        debug=True       # Enable debug mode for development
+    )
+```
+Once the server is running, you can test the API by sending a `POST` request to the `/api/plan` endpoint with the required data.
+
+## Accessing the Plan Endpoint
+
+A typical request might look like this:
+
+```Plain text
+POST http://localhost:3000/api/plan
+Content-Type: application/x-www-form-urlencoded
+
+city=New York&days=2&attractions_per_day=3
+```
+
+This POST request is sending form data to our API endpoint with three parameters:
+
+- `city`: The destination city (New York)
+- `days`: The number of days for the trip (2)
+- `attractions_per_day`: The number of attractions to visit each day (3)
+
+The Content-Type header indicates we're sending form-encoded data, which is how HTML forms typically submit information to servers. The POST method is used because we're creating a new resource (a travel plan) rather than just retrieving data.
+
+And a successful response might look like this:
+
+```JSON
+{
+  "city": "New York",
+  "daily_plans": [
+    {
+      "attractions": [
+        {
+          "address": "Liberty Island, New York, NY 10004",
+          "category": "Historical",
+          "description": "An iconic symbol of freedom and democracy, the Statue of Liberty is located on Liberty Island.",
+          "estimated_duration": "3 hours",
+          "name": "Statue of Liberty"
+        },
+        ...
+      ],
+      "day_number": 1,
+      "meal_suggestions": [
+        "Lunch at a local deli near Battery Park (try bagels or a pastrami sandwich)",
+        ...
+      ]
+    },
+    ...
+  ],
+  "days": 2,
+  "overall_tips": "Consider using the subway for quick transportation between attractions"
+}
+```
