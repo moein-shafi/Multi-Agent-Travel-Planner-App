@@ -58,51 +58,61 @@ document.getElementById('tripForm').addEventListener('submit', async function(e)
         if (data.daily_plans && Array.isArray(data.daily_plans)) {
             data.daily_plans.forEach((day) => {
                 html += `
-                    <div class="day-plan">
+                    <!-- Added mb-4 for margin-bottom spacing between days -->
+                    <div class="day-plan mb-4">
                         <h6>Day ${day.day_number}</h6>
-                        <ul>
+                        <!-- Replaced basic ul with Bootstrap's list-group component -->
+                        <ul class="list-group">
                             ${day.attractions.map(attraction => `
-                                <li>
+                                <!-- list-group-item adds borders, padding, and hover states -->
+                                <li class="list-group-item">
                                     <strong>${attraction.name}</strong><br>
-                                    ${attraction.category} • <small>${attraction.estimated_duration}</small><br>
-                                    ${attraction.address ? `<small>${attraction.address}</small><br>` : ''}
+                                    <!-- Added text-muted class to de-emphasize secondary information -->
+                                    <small class="text-muted">${attraction.category} • ${attraction.estimated_duration}</small><br>
+                                    ${attraction.address ? `<small class="text-muted">${attraction.address}</small><br>` : ''}
                                     ${attraction.description}
                                 </li>
                             `).join('')}
                         </ul>
-                        ${day.meal_suggestions && Array.isArray(day.meal_suggestions) && day.meal_suggestions.length ? `
-                            <div>
-                                <p>Meal Suggestions:</p>
-                                <ul>
+                    ${day.meal_suggestions ? `
+                        <!-- Added mt-2 for margin-top spacing -->
+                        <div class="mt-2">
+                            <!-- Used text-muted for consistent styling of secondary headers -->
+                            <small class="text-muted">Meal Suggestions:</small>
+                            <!-- list-unstyled removes default bullet points for cleaner design -->
+                                <ul class="list-group">
                                     ${day.meal_suggestions.map(suggestion => `
-                                        <li>${suggestion}</li>
-                                    `).join('')}
-                                </ul>
-                            </div>
-                        ` : ''}
-                    </div>
-                `;
-            });
-            
-            // Only show overall tips if they exist
-            if (data.overall_tips) {
-                html += `
-                    <div>
-                        <h6>Overall Tips</h6>
-                        <div>
-                            ${data.overall_tips}
+                                        <li class="list-group-item>• ${suggestion}</li>
+                                `).join('')}
+                            </ul>
                         </div>
+                    ` : ''}
+                </div>
+            `;
+        });
+        
+        if (data.overall_tips) {
+            html += `
+                <!-- Added overall-tips class for potential custom styling and mt-4 for spacing -->
+                <div class="overall-tips mt-4">
+                    <h6>Overall Tips</h6>
+                    <!-- Used Bootstrap's alert component with info styling -->
+                    <div class="alert alert-info">
+                        ${data.overall_tips}
                     </div>
-                `;
-            }
-        } else {
-            html += '<div>No itinerary data available</div>';
+                </div>
+            `;
         }
-        html += '</div>';
-        document.getElementById('resultsContent').innerHTML = html;
+    } else {
+        // <!-- Used Bootstrap's alert component with warning styling for empty states -->
+        html += '<div class="alert alert-warning">No itinerary data available</div>';
+    }
+    html += '</div>';
+    document.getElementById('resultsContent').innerHTML = html;
     } catch (error) {
+        // <!-- Used Bootstrap's alert component with danger styling for errors -->
         document.getElementById('resultsContent').innerHTML = `
-            <div>
+            <div class="alert alert-danger">
                 An error occurred while planning your trip. Please try again.
             </div>
         `;

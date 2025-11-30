@@ -9,7 +9,7 @@ app = Flask(__name__)
 @app.route('/')
 def index():
     # Render the HTML template
-    return render_template('index.html')
+    return render_template('index-beautiful.html')
 
 
 @app.route('/api/plan', methods=['POST'])
