@@ -2103,3 +2103,92 @@ When no itinerary data is available, we use the `alert-warning` class which disp
 For actual errors during processing, the `alert-danger` class with its red background clearly communicates that something went wrong. This color-coding follows standard web conventions where red typically indicates errors or problems that need attention.
 
 By using Bootstrap's contextual alert classes consistently throughout the application, we create an intuitive visual language that helps users quickly understand different states without having to carefully read the message text.
+
+
+
+# Integrating the Frontend with the CrewAI Backend
+
+Throughout our journey, we've built a travel planner application step by step - creating a RESTful API with Flask, rendering HTML pages, adding JavaScript interactivity, and enhancing the UI with Bootstrap. Now, we've reached the culminating step: integrating our frontend with the powerful CrewAI backend. This section will guide you through replacing the simulated functionality with real API integration, allowing your application to process actual travel planning requests and display structured itinerary results. By completing this final lesson, you'll have a fully functional travel planner app that seamlessly connects the JavaScript frontend with the Flask backend, bringing together everything you've learned in this course.
+
+## Transitioning to Real API Integration
+In the previous lessons, we used simulated responses to mimic the behavior of our travel planner app. While this was useful for testing and development, it's time to replace these simulations with actual API calls to our Flask backend. This transition is crucial for making the application functional and providing users with real travel itineraries.
+
+To connect our frontend with the backend, we'll use the `Fetch API` - a modern JavaScript interface for making HTTP requests. The Fetch API provides a cleaner, more powerful alternative to traditional `XMLHttpRequest`, with promises-based syntax that works well with `async/await` for more readable asynchronous code.
+
+Here's how we'll use the Fetch API with our application:
+
+1. **Capturing form data**: When a user submits the travel planning form, we'll collect all input values using the `FormData` object
+1. **Making the request**: We'll send a POST request to our Flask backend's `/api/plan` endpoint, including the form data in the request body
+1. **Processing the response**: Our Flask backend will process the request using CrewAI, generate a travel itinerary, and return it as a JSON response
+
+The beauty of our implementation is that we don't need to change how we display the itinerary. Since we designed our backend to return data in the same structure as our simulated responses, the `DOM` manipulation code we already wrote will work seamlessly with the real data. This means we can focus solely on replacing the data source (from simulated to API-based) without having to modify our presentation logic.
+
+## Implementing the Fetch API Call
+To connect the frontend with the Flask backend, we will use the `Fetch API` to send a `POST` request to the `/api/plan` endpoint. This involves capturing the form data and sending it to the server. In our JavaScript code, we use the `FormData` object to gather the input values from the form. The `fetch` function is then used to send the `POST` request, with the form data included in the request body. Here's how the implementation looks:
+
+```JavaScript
+document.getElementById('tripForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    document.getElementById('loadingSpinner').style.display = 'block';
+    document.getElementById('resultsCard').style.display = 'block';
+    document.getElementById('resultsContent').innerHTML = '';
+
+    // We don't need to manually extract the form data anymore
+    const formData = new FormData(this);
+
+    try {
+        // We don't need to create simulated data anymore as we'll get real data from the API
+
+        // Send a POST request to the '/api/plan' endpoint with the form data
+        const response = await fetch('/api/plan', {
+            method: 'POST',
+            body: formData
+        });
+
+        // Parse the JSON response from the server
+        const data = await response.json();
+        
+        // Further processing...
+        
+    } catch (error) {
+        document.getElementById('resultsContent').innerHTML = `
+            <div class="alert alert-danger">
+                An error occurred while planning your trip. Please try again.
+            </div>
+        `;
+    } finally {
+        document.getElementById('loadingSpinner').style.display = 'none';
+    }
+});
+```
+In this code, we first prevent the default form submission behavior using `e.preventDefault()`. We then show a loading spinner to indicate that the request is being processed. The FormData object collects the form inputs, and the `fetch` function sends a `POST` request to the `/api/plan` endpoint with this data.
+
+## Processing the API Response
+Once the request is sent, we need to handle the response from the server. The response is typically in `JSON` format, which we can parse using the `response.json()` method. We then check if the response is successful and contains the expected data. If the response is okay, we proceed to display the itinerary. If not, we handle the error by displaying an appropriate message to the user. Here's how we process the response:
+
+```JavaScript
+try {
+    // Send a POST request to the '/api/plan' endpoint with the form data
+    const response = await fetch('/api/plan', {
+        method: 'POST',
+        body: formData
+    });
+
+    // Parse the JSON response from the server
+    const data = await response.json();
+    
+    // Check if the response is successful and contains data
+    if (response.ok && data) {
+        // Display the itinerary...
+        
+    } else {
+        document.getElementById('resultsContent').innerHTML = `
+            <div class="alert alert-danger">
+                ${data.error || 'An error occurred while planning your trip.'}
+            </div>
+        `;
+    }
+}
+```
+In this snippet, we check if the response is successful using `response.ok`. If it is, we proceed to update the `DOM` with the itinerary data. The good news is that we don't need to change how we display our itinerary - the display logic we created earlier for the simulated data will seamlessly work with the real data from our API, since we designed our backend to return data in the same structure. Otherwise, we display an error message, using the error message from the server if available.
