@@ -1,8 +1,16 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
 from travel_planner.travel_planner_crew import TravelPlannerCrew
 
 # Initialize Flask application
 app = Flask(__name__)
+
+
+# Route for the home page
+@app.route('/')
+def index():
+    # Render the HTML template
+    return render_template('index.html')
+
 
 @app.route('/api/plan', methods=['POST'])
 def plan_trip():

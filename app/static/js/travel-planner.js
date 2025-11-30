@@ -1,4 +1,3 @@
-// ...existing code...
 document.getElementById('tripForm').addEventListener('submit', async function(e) {
     e.preventDefault();
     
@@ -112,4 +111,3 @@ document.getElementById('tripForm').addEventListener('submit', async function(e)
         document.getElementById('loadingSpinner').style.display = 'none';
     }
 });
-// ...existing code...

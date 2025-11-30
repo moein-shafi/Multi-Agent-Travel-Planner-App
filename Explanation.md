@@ -1489,6 +1489,93 @@ And a successful response might look like this:
 ```
 
 
+# Rendering a Basic HTML Page with Flask
+
+In this lesson, we will focus on creating a basic HTML interface for our travel planner application. This interface will allow users to input their travel preferences and view the generated itinerary. By the end of this lesson, you will have a foundational understanding of how to render HTML pages using Flask, which is a crucial step in transitioning from backend API functionality to a user-facing application. This lesson builds on the RESTful API we developed in the previous lesson, and it sets the stage for creating a more interactive and engaging user experience.
+
+Reviewing the Project Structure
+Our project is organized to support both backend and frontend development. Here's a visual representation of the structure:
+
+```Plain text
+app/
+├── main.py
+├── travel_planner/
+│   ├── travel_planner_crew.py
+│   ├── models/
+│   ├── tools/
+│   └── config/
+└── templates/
+    └── index.html
+```
+The `templates` folder is a key component of this structure, as it stores all the HTML files that our Flask application will render. Within this folder, you will find the `index.html` file, which serves as the main interface for our travel planner application. This file will be the focus of our customization efforts as we build a user-friendly interface.
+
+## Defining the Home Page Endpoint
+To serve our HTML page, we need to define a route in our Flask application that renders the `index.html` file. This is done by setting up a home page endpoint using the `@app.route` decorator. Flask provides a powerful function called `render_template` that allows us to serve HTML files to users. This function is essential for rendering HTML pages and dynamically inserting data into templates. When a user accesses a specific route in our Flask application, `render_template` locates the corresponding HTML file in the `templates` folder and serves it to the user. This process enables us to create dynamic web pages that can display data from our backend API.
+
+```Python
+from flask import Flask, render_template, request, jsonify
+from travel_planner.travel_planner_crew import TravelPlannerCrew
+
+# Initialize Flask application
+app = Flask(__name__)
+
+# Route for the home page
+@app.route('/')
+def index():
+    # Render the HTML template
+    return render_template('index.html')
+    
+# Travel planning route and configurations to start the server...
+```
+
+In this code snippet, the `index` function is associated with the root URL (`'/'`). When a user accesses this URL, Flask will call the `index` function, which in turn uses `render_template` to serve the `index.html` file. This integration allows us to seamlessly connect our backend logic with the frontend interface.
+
+## Creating and Customizing the HTML Template
+Let's take a look at the basic structure of our `index.html` file. This file includes essential elements such as the `<head>`, `<body>`, a form for user input, and a section for displaying results. The `<head>` contains metadata and the title of the page, while the `<body>` houses the main content. The form allows users to input their travel preferences, and the results section will display the generated itinerary.
+
+```HTML
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Travel Planner</title>
+</head>
+<body>
+    <h1>Travel Planner</h1>
+    
+    <div>
+        <h5>Plan Your Trip</h5>
+        <!-- Form for trip planning -->
+        <form id="tripForm">
+            <div>
+                <label for="city">City</label>
+                <input type="text" id="city" name="city" required>
+            </div>
+            <div>
+                <label for="days">Number of Days</label>
+                <input type="number" id="days" name="days" min="1" required>
+            </div>
+            <div>
+                <label for="attractions_per_day">Number of Attractions per Day</label>
+                <input type="number" id="attractions_per_day" name="attractions_per_day" min="1" required>
+            </div>
+            <button type="submit">Plan Trip</button>
+        </form>
+    </div>
+
+    <!-- Results Section -->
+    <div id="resultsCard" style="display: none;">
+        <h5>Your Travel Itinerary</h5>
+        <div id="resultsContent"></div>
+    </div>
+</body>
+</html>
+```
+
+The HTML template includes a form designed to capture user input for travel planning, with fields for the city, number of days, and attractions per day, each accompanied by labels and validation to ensure accurate data entry. Upon submission, this form will eventually trigger backend processes to generate a travel itinerary. The results section, initially hidden, is designated to display the itinerary once available. This basic structure will be improved in future lessons to enhance functionality and user interaction.
+
+
 
 # Adding Simulated Functionality with JavaScript
 
