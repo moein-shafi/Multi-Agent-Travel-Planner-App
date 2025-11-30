@@ -1879,3 +1879,227 @@ document.getElementById('resultsContent').innerHTML = html;
 In this final section, we check if overall tips are available by verifying that the `data.overall_tips` property exists. If it does, we append a new div to our HTML string that contains an h6 heading labeled "Overall Tips" and a div that displays the tips content. This provides users with general advice for their trip, such as what to pack or local customs to be aware of.
 
 After constructing all the HTML content for the itinerary, we use the `innerHTML` property to inject this content into the element with the ID `"resultsContent"`. This replaces any previous content in that element with our newly generated itinerary. By doing this, we dynamically update the page to display the travel plan without requiring a page refresh, providing a seamless and interactive user experience.
+
+
+
+# Styling Your Travel Planner App with Bootstrap
+
+In the previous sections, we laid the foundation for our travel planner application by creating a RESTful API with Flask, rendering a basic HTML page, and adding interactivity with JavaScript. Now, we will focus on enhancing the visual appeal and usability of our application using `Bootstrap`, a popular front-end framework. Styling is crucial for creating an intuitive and visually appealing user interface, which can significantly improve the user experience. By the end of this lesson, you will be able to apply Bootstrap's responsive design features to create a modern and user-friendly travel planner application.
+
+## Understanding Bootstrap and Responsive Design
+`Bootstrap` is a powerful front-end framework that provides a collection of `CSS` and `JavaScript` components for building responsive and `mobile-first` websites. It offers a wide range of pre-designed components such as buttons, forms, and navigation bars, which can be easily customized to fit your application's needs. Responsive design is a key feature of Bootstrap, allowing your application to adapt seamlessly to different screen sizes and devices. This ensures that users have a consistent and enjoyable experience, whether they are accessing your application on a desktop, tablet, or smartphone.
+
+## Integrating Bootstrap into Your Flask Application
+Bootstrap makes your web application look professional and responsive with minimal effort, providing ready-made styles and interactive elements like buttons, forms, and navigation menus. To add Bootstrap to your Flask application, you need to include two separate parts of the framework in your HTML file - one for styling and one for interactivity.
+
+```HTML
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Travel Planner</title>
+    <!-- Link to Bootstrap CSS for styling -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Form for trip planning... -->
+
+    <!-- Results Section... -->
+
+    <!-- Link to Bootstrap JavaScript for interactive components -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Our custom JavaScript file comes after Bootstrap's JavaScript -->
+    <script src="{{ url_for('static', filename='js/travel-planner.js') }}"></script>
+</body>
+</html>
+```
+Think of Bootstrap as having two main parts:
+
+1. **CSS file** (added in the head section): Controls how elements look - their colors, sizes, and layout. This needs to be loaded early so the page looks right from the start.
+
+1. **JavaScript file** (added at the bottom of the body): Makes elements interactive - allowing dropdowns to expand, modals to pop up, and alerts to be dismissed. This is placed at the bottom so the page content loads before running any JavaScript.
+
+<u>The order of the script tags is important</u>. We place Bootstrap's JavaScript file before our custom JavaScript file because our code might depend on Bootstrap's functionality. For example, if our custom JavaScript creates or manipulates Bootstrap components (like dynamically showing alerts or toggling collapsible elements), Bootstrap's JavaScript needs to be loaded first to define those functions. This approach gives us a complete design framework without having to write extensive custom CSS, allowing us to focus on building our application's functionality while still delivering a professional user experience.
+
+## Styling the Travel Planner Form with Bootstrap
+Bootstrap provides a `grid` system that uses container, row, and column classes to create responsive layouts. Let's transform our basic HTML form into a visually appealing and responsive interface using Bootstrap's components and utility classes.
+
+```HTML
+<!-- Container mt-5 class provides proper padding and centering -->
+<div class="container mt-5">
+    <!-- mb-4 adds margin-bottom to separate the heading from the form -->
+    <h1 class="mb-4">Travel Planner</h1>
+    <!-- Row creates a horizontal group of columns -->
+    <div class="row">
+        <!-- col-md-6 makes the form take half the container width on medium screens and larger -->
+        <div class="col-md-6">
+            <!-- Card mb-4 component creates a bordered box with shadow for visual distinction -->
+            <div class="card mb-4">
+                <!-- card-body adds proper padding inside the card -->
+                <div class="card-body">
+                    <!-- card-title styles the heading consistently with Bootstrap design -->
+                    <h5 class="card-title">Plan Your Trip</h5>
+                    
+                    <form id="tripForm">
+                        <!-- mb-3 adds margin-bottom between form groups for proper spacing -->
+                        <div class="mb-3">
+                            <!-- form-label applies proper styling and spacing to labels -->
+                            <label for="city" class="form-label">City</label>
+                            <!-- form-control styles the input with consistent padding, border and focus states -->
+                            <input type="text" class="form-control" id="city" name="city" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="days" class="form-label">Number of Days</label>
+                            <!-- form-control works on all input types for consistent styling -->
+                            <input type="number" class="form-control" id="days" name="days" min="1" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="attractions_per_day" class="form-label">Number of Attractions per Day</label>
+                            <input type="number" class="form-control" id="attractions_per_day" name="attractions_per_day" min="1" required>
+                        </div>
+                        <!-- btn adds basic button styling, btn-primary applies the theme's primary color -->
+                        <button type="submit" class="btn btn-primary">Plan Trip</button>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Results Section... -->
+        </div>
+    </div>
+</div>
+```
+This code transforms our basic form into a professional-looking interface by:
+
+1. **Creating a responsive layout**: The grid system (`container`, `row`, and `col-md-6`) ensures the form adapts to different screen sizes. On desktop, the form takes half the width, while on mobile devices, it expands to full width automatically.
+
+1. **Adding visual hierarchy**: The card component creates a distinct visual section with a subtle shadow and border, helping users understand that these elements belong together.
+
+1. **Improving form usability**: Bootstrap's form classes (`form-control`, `form-label`) provide consistent spacing, padding, and visual feedback. The inputs expand to fill their container, have proper padding for touch targets, and show focus states when interacted with.
+
+1. **Providing proper spacing**: Utility classes like `mt-5`, `mb-4`, and `mb-3` create breathing room between elements, making the interface less cluttered and more readable.
+
+1. **Enhancing the submit button**: The `btn btn-primary` classes transform the plain button into a visually distinct call-to-action that matches the site's color scheme and provides hover/active states for better user feedback.
+
+These Bootstrap components and classes work together to create a cohesive, professional design with minimal custom CSS required.
+
+## Enhancing the Results Display with Bootstrap Components
+Bootstrap offers various components that can enhance the dynamic feedback of your application. Let's transform our basic results section into a visually consistent and user-friendly display:
+
+```HTML
+<!-- Card component creates a visually distinct container for results -->
+<div class="card" id="resultsCard" style="display: none;">
+    <!-- card-body adds proper padding inside the card -->
+    <div class="card-body">
+        <!-- card-title styles the heading consistently with Bootstrap design -->
+        <h5 class="card-title">Your Travel Itinerary</h5>
+        
+        <!-- Loading indicator with proper centering -->
+        <div id="loadingSpinner" class="text-center" style="display: none;">
+            <!-- Bootstrap's built-in spinner component provides an animated loading indicator -->
+            <div class="spinner-border text-primary" role="status">
+                <!-- Visually hidden text for screen readers - improves accessibility -->
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+        
+        <!-- Container for dynamically generated results -->
+        <div id="resultsContent"></div>
+    </div>
+</div>
+```
+The key improvements to the results section include consistent visual styling with the `card` component, a professional animated loading indicator, accessibility enhancements with the `visually-hidden` text, and proper content organization with appropriate Bootstrap classes.
+
+## Styling Daily Attractions with Bootstrap
+When displaying travel itineraries, presenting attractions in a visually organized way helps users quickly understand their daily schedule. Bootstrap's list components are perfect for this purpose, creating clear visual separation between items while maintaining a consistent design language.
+
+In our JavaScript code, we transform the basic HTML list into a structured Bootstrap list-group:
+
+```HTML
+if (data.daily_plans && Array.isArray(data.daily_plans)) {
+    data.daily_plans.forEach((day) => {
+        html += `
+            <!-- Added mb-4 for margin-bottom spacing between days -->
+            <div class="day-plan mb-4">
+                <h6>Day ${day.day_number}</h6>
+                <!-- Replaced basic ul with Bootstrap's list-group component -->
+                <ul class="list-group">
+                    ${day.attractions.map(attraction => `
+                        <!-- list-group-item adds borders, padding, and hover states -->
+                        <li class="list-group-item">
+                            <strong>${attraction.name}</strong><br>
+                            <!-- Added text-muted class to de-emphasize secondary information -->
+                            <small class="text-muted">${attraction.category} • ${attraction.estimated_duration}</small><br>
+                            ${attraction.address ? `<small class="text-muted">${attraction.address}</small><br>` : ''}
+                            ${attraction.description}
+                        </li>
+                    `).join('')}
+                </ul>
+```
+The `list-group` component creates a bordered container for each attraction, while the `mb-4 class` adds proper spacing between days. Using `strong` for attraction names and `text-muted` for secondary details creates a clear visual hierarchy, making it easier for users to scan through their itinerary and identify key information at a glance.
+
+## Styling Meal Suggestions and Tips
+Meal suggestions and travel tips are supplementary information that should be visually distinct from the main attractions. Bootstrap provides several components and utility classes that help us create this distinction while maintaining a cohesive design.
+
+```HTML
+                ${day.meal_suggestions ? `
+                    <!-- Added mt-2 for margin-top spacing -->
+                    <div class="mt-2">
+                        <!-- Used text-muted for consistent styling of secondary headers -->
+                        <small class="text-muted">Meal Suggestions:</small>
+                        <!-- list-unstyled removes default bullet points for cleaner design -->
+                        <ul class="list-unstyled">
+                            ${day.meal_suggestions.map(suggestion => `
+                                <!-- Added bullet character manually for more control over spacing -->
+                                <li>• ${suggestion}</li>
+                            `).join('')}
+                        </ul>
+                    </div>
+                ` : ''}
+            </div>
+        `;
+    });
+    
+    if (data.overall_tips) {
+        html += `
+            <!-- Added overall-tips class for potential custom styling and mt-4 for spacing -->
+            <div class="overall-tips mt-4">
+                <h6>Overall Tips</h6>
+                <!-- Used Bootstrap's alert component with info styling -->
+                <div class="alert alert-info">
+                    ${data.overall_tips}
+                </div>
+            </div>
+        `;
+    }
+```
+For meal suggestions, we use a more subtle approach with the `list-unstyled` class to remove default bullets, creating a cleaner look that doesn't compete with the main attractions. The manual bullet points (•) give us more control over spacing and appearance.
+
+The overall tips section uses Bootstrap's `alert alert-info` component, which adds a light blue background and subtle border. This visual treatment helps these important tips stand out from the rest of the content while using a color that suggests helpful information rather than a warning or error.
+
+## Handling Edge Cases and Errors
+A well-designed application needs to handle edge cases gracefully. Bootstrap's alert components provide a consistent way to communicate different states to users through both color and structure.
+
+```HTML
+} else {
+    <!-- Used Bootstrap's alert component with warning styling for empty states -->
+    html += '<div class="alert alert-warning">No itinerary data available</div>';
+}
+html += '</div>';
+document.getElementById('resultsContent').innerHTML = html;
+} catch (error) {
+    <!-- Used Bootstrap's alert component with danger styling for errors -->
+    document.getElementById('resultsContent').innerHTML = `
+        <div class="alert alert-danger">
+            An error occurred while planning your trip. Please try again.
+        </div>
+    `;
+}
+```
+When no itinerary data is available, we use the `alert-warning` class which displays a yellow background, indicating caution but not a critical error. This visual cue helps users understand that while their request was processed, no results were found.
+
+For actual errors during processing, the `alert-danger` class with its red background clearly communicates that something went wrong. This color-coding follows standard web conventions where red typically indicates errors or problems that need attention.
+
+By using Bootstrap's contextual alert classes consistently throughout the application, we create an intuitive visual language that helps users quickly understand different states without having to carefully read the message text.
